@@ -1,7 +1,7 @@
 Single precision FFT written in ARM assembler
 =============================================
 
-V0.3 12th April 2015  
+V0.3 13th April 2015  
 Author: Peter Hinch  
 
 Overview
@@ -15,7 +15,7 @@ Limitations
 -----------
 
 This code effectively replaces my integer based converter: the ARM FPU is sufficiently fast that integer code offers no discernable speed advantage. The use of floating point avoids the problems with scaling and loss of precision which become apparent when integers are used for transforms with more than 256 bins.  
-If `adc.read_timed()` is to be used for data acquisition, you should use a firmware build dated 14th March 2015 or later. Note that read_timed() blocks until completion.  
+If `adc.read_timed()` is to be used for data acquisition, you should use a firmware build dated 24th March 2015 or later. Note that read_timed() blocks until completion but is designed to work up to about a 750KHz sample rate.  
 Conversion from Cartesian to polar is performed in assembler using an approximation to the `math.atan2()` function. Its accuracy is of the order of +-0.085 degrees.
 
 Getting Started
@@ -40,7 +40,7 @@ dftclass.py | Python interface. |
 window.py   | Assembler code to initialise an array and to multiply two 1D arrays. |
 polar.py    | Cartesian to polar conversion. Includes fast atan2 approximation. |
 ctrlmap.ods | Structure of the control array |
-algorithms.py | Floating point Python DFT used as basis for asm code. |
+algorithms.py | Pure Python DFT used as basis for asm code. |
 
 dftadc.py also illustrates the use of a window function.
 
