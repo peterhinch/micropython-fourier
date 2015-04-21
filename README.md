@@ -1,8 +1,9 @@
 Single precision FFT written in ARM assembler
 =============================================
 
-V0.3 13th April 2015  
+V0.4 21st April 2015  
 Author: Peter Hinch  
+Requires: ARM platform with FPU (e.g. Pyboard). Firmware dated 21st April 2015 or later
 
 Overview
 --------
@@ -42,6 +43,7 @@ polar.py    | Cartesian to polar conversion. Includes fast atan2 approximation. 
 ctrlmap.ods | Structure of the control array |
 algorithms.py | Pure Python DFT used as basis for asm code. |
 
+The test programs dftadc.py and dfttest.py provide means of demonstrating the code with ADC and synthetic data respectively.  
 dftadc.py also illustrates the use of a window function.
 
 Output Scaling for Forward Transforms

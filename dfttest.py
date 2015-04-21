@@ -33,6 +33,12 @@ def test():
     mydft.run(POLAR)
     polarprint(mydft)
 
+# Forward polar decibel transform
+def dbtest():
+    mydft = DFT(128, acqu_test)
+    mydft.run(DB)
+    polarprint(mydft)
+
 # Reverse transform
 def trev():
     mydft = DFT(128, revtest)

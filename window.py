@@ -1,6 +1,7 @@
 # window.py Window function
 # Author: Peter Hinch
-# 7th April 2015
+# 20th April 2015
+# Now uses FPU mnemonics. Tests complete.
 # Floating point version
 # Applies a window function to an array of real samples before performing a DFT.
 # removes the DC (zero frequency) component by averaging the sample set and
@@ -20,24 +21,24 @@ import array, math
 def winapply(r0, r1, r2):
     push({r0, r2})
     mov(r3, 0)
-    data(2, 0xEE07, 0x3A10) # vmov	s14, r3
-    data(2, 0xEEF8, 0x7AC7) # fsitos s15, s14 zero f15
+    vmov(s14, r3)
+    vcvt_f32_s32(s15, s14)  # s15 holds value to set
     label(LOOP1)
-    data(2, 0xED90, 0x7A00) # vldr	s14, [r0]
-    data(2, 0xEE77, 0x7A27) # vadds s15, s14, s15
+    vldr(s14, [r0, 0])
+    vadd(s15, s14, s15)
     add(r0, 4)
     sub(r2, 1)
     bgt(LOOP1)
     pop({r0, r2})
-    data(2, 0xEE07, 0x2A10) # vmov	s14, r2
-    data(2, 0xEEB8, 0x7AC7) # fsitos s14, s14 convert to float
-    data(2, 0xEEC7, 0x6A87) # vdiv  s13, s15, s14 avg. in s13
+    vmov(s14, r2)
+    vcvt_f32_s32(s14, s14)  # convert array length to float
+    vdiv(s13, s15, s14)     # avg. in s13
     label(LOOP)
-    data(2, 0xED90, 0x7A00) # vldr	s14, [r0]
-    data(2, 0xEE77, 0x7A66) # vsub  s15, s14, s13
-    data(2, 0xED91, 0x7A00) # vldr	s14, [r1]
-    data(2, 0xEE67, 0x7A27) # vmul  s15, s14, s15
-    data(2, 0xEDC0, 0x7A00) # vstr	s15, [r0]
+    vldr(s14, [r0, 0])
+    vsub(s15, s14, s13)
+    vldr(s14, [r1, 0])
+    vmul(s15, s14, s15)
+    vstr(s15, [r0, 0])
     add(r0, 4)
     add(r1, 4)
     sub(r2, 1)
@@ -49,10 +50,10 @@ def winapply(r0, r1, r2):
 # r2: length of array
 @micropython.asm_thumb
 def setarray(r0, r1, r2):
+    vmov(s14, r1)
+    vcvt_f32_s32(s15, s14)  # Value in s15
     label(LOOP)
-    data(2, 0xEE07, 0x1A10) # vmov	s14, r1
-    data(2, 0xEEF8, 0x7AC7) # fsitos s15, s14
-    data(2, 0xEDC0, 0x7A00) # vstr	s15, [r0]
+    vstr(s15, [r0, 0])
     add(r0, 4)
     sub(r2, 1)
     bgt(LOOP)
@@ -65,9 +66,9 @@ def setarray(r0, r1, r2):
 @micropython.asm_thumb
 def icopy(r0, r1, r2):
     label(LOOP)
-    data(2, 0xED90, 0x7A00) # vldr  s14, [r0]
-    data(2, 0xEEF8, 0x7AC7) # fsitos s15, s14
-    data(2, 0xEDC1, 0x7A00) # vstr  s15, [r1]
+    vldr(s14, [r0, 0])
+    vcvt_f32_s32(s15, s14)
+    vstr (s15, [r1, 0])
     add(r0, 4)
     add(r1, 4)
     sub(r2, 1)

@@ -19,7 +19,7 @@ from polar import topolar
 # of the transform. Only bit 0 now used by fft()
 REVERSE = const(0)      # Inverse transform (frequency to time domain)
 FORWARD = const(1)      # Forward transform
-POLAR   = const(3)      # bit 2: Polar conversion (uses double)
+POLAR   = const(3)      # bit 2: Polar conversion
 DB      = const(7)      # bit 3: Polar with dB conversion
 
 # Instantiating the class creates the real, imaginary and control arrays, populates real and imaginary

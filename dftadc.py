@@ -1,11 +1,8 @@
 # dftadc.py Demo/test program for DFT.
 # Author: Peter Hinch
-# 11th April 2015
+# 21st April 2015
 # Acquires samples from the ADC on pin X7.
 # Generates a waveform on pin X5: link X5-X7 to test
-
-# Note the component in bin 124 caused by the output waveform's
-# stepwise approximation
 
 import array
 import math
@@ -18,6 +15,10 @@ micropython.alloc_emergency_exception_buf(100)
 def hanning(x, length):                 # Example of a window function
     return 0.54 - 0.46*math.cos(2*math.pi*x/(length-1))
 
+def cartesian_print(objDFT):
+    for x in range(objDFT.length):
+        print("{:6d}{:8.2f}{:8.2f}j".format(x, objDFT.re[x], objDFT.im[x]))
+
 def polarprint(objDFT):
     print("Polar: mag      phase (degs)")
     for x in range(objDFT.length//2):   # Only the first half is valid
@@ -27,6 +28,8 @@ def polarprint(objDFT):
 # This is done using a callback rather than a circular timed write because the current
 # MicroPython implementation doesn't support concurrent DAC and ADC timed operation.
 # Consequently output frequency is limited.
+# Sinewave amplitude 3.25*127/255 = 1.68Vpk
+# = 20*log10((3.25*127/255)/sqrt(2)) = 1.17dB relative to 1VRMS
 
 OSLEN = const(100)
 outputsamples = array.array('i', [0]*OSLEN)
@@ -50,6 +53,8 @@ tim.callback(cb)
 mydft = DFTADC(128, "X7")
 # mydft = DFTADC(128, "X7", hanning)
 
+# Expected result (without window function)
+# bin 10 (sampling 100Hz for 100mS) should contain about +1dB with random phase
 def test():
     mydft.run(DB, 0.1)
     polarprint(mydft)

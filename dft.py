@@ -1,7 +1,7 @@
 # dft.py DFT code
 # Author: Peter Hinch
-# 6th April 2015
-# Uses FPU.
+# 20th April 2015
+# Uses FPU: now uses newly implemented FPU assembler mnemonics.
 # Timing: 256 points 2.5mS vs 115mS for Python (90mS with native code emitter)
 # 1024 points:12mS vs 8.98mS on Cray 1 :-)
 # Now supports dB conversion
@@ -94,42 +94,42 @@ def fft(r0, r1):        # r0 adress of scratchpad, r1 = Control: see above
 
 # Multiply r5 = r3*r5
     label(FSCALE)
-    data(2, 0xEE07, 0x3A10) # vmov	s14, r3
-    data(2, 0xEE07, 0x5A90) # vmov	s15, r5
-    data(2, 0xEE67, 0x7A27) # fmuls s15, s14, s15
-    data(2, 0xEE17, 0x5A90) # vmov	r5, s15
+    vmov(s14, r3)
+    vmov(s15, r5)
+    vmul(s15, s14, s15)
+    vmov(r5, s15)
     bx(lr)                  # ! FSCALE
 
 # Complex primitives:
     label(CADD)             # add
     push({r1, r7})
     add(r7, r0, r2)         # op1 address
-    data(2, 0xED97, 0x6A00) # flds s12, [r7]    op1.real
-    data(2, 0xEDD7, 0x6A01) # flds s13, [r7, 4] op1.imag
+    vldr(s12, [r7, 0])      # op1.real
+    vldr(s13, [r7, 1])      # op1.imag
     add(r7, r0, r3)         # op2 address
-    data(2, 0xED97, 0x7A00) # flds s14, [r7]    op2.real
-    data(2, 0xEDD7, 0x7A01) # flds s15, [r7, 4] op2.imag
-    data(2, 0xEE36, 0x5A07) # fadds s10, s12, s14
-    data(2, 0xEE76, 0x5AA7) # fadds s11, s13, s15
+    vldr(s14, [r7, 0])      # op2.real
+    vldr(s15, [r7, 1])      # op2.imag
+    vadd(s10, s12, s14)
+    vadd(s11, s13, s15)
     add(r1, r0, r1)         # Destination offset
-    data(2, 0xED81, 0x5A00) # fsts	s10, [r1,0]
-    data(2, 0xEDC1, 0x5A01) # fsts	s11, [r1,4]
+    vstr(s10, [r1, 0])
+    vstr(s11, [r1, 1])
     pop({r1, r7})
     bx(lr)                  # ! CADD
 
     label(CSUB)             # subtract
     push({r1, r7})
     add(r7, r0, r2)         # op1 address
-    data(2, 0xED97, 0x6A00) # flds s12, [r7]    op1.real
-    data(2, 0xEDD7, 0x6A01) # flds s13, [r7, 4] op1.imag
+    vldr(s12, [r7, 0])      # op1.real
+    vldr(s13, [r7, 1])      # op1.imag
     add(r7, r0, r3)         # op2 address
-    data(2, 0xED97, 0x7A00) # flds s14, [r7]    op2.real
-    data(2, 0xEDD7, 0x7A01) # flds s15, [r7, 4] op2.imag
-    data(2, 0xEE36, 0x5A47) # fsub s10, s12, s14
-    data(2, 0xEE76, 0x5AE7) # fsub s11, s13, s15
+    vldr(s14, [r7, 0])      # op2.real
+    vldr(s15, [r7, 1])      # op2.imag
+    vsub(s10, s12, s14)
+    vsub(s11, s13, s15)
     add(r1, r0, r1)         # Destination offset
-    data(2, 0xED81, 0x5A00) # fsts	s10, [r1,0]
-    data(2, 0xEDC1, 0x5A01) # fsts	s11, [r1,4]
+    vstr(s10, [r1, 0])
+    vstr(s11, [r1, 1])
     pop({r1, r7})
     bx(lr)                  # ! CSUB
 
@@ -139,22 +139,22 @@ def fft(r0, r1):        # r0 adress of scratchpad, r1 = Control: see above
     label(CMUL)             # multiply
     push({r1, r7})
     add(r7, r0, r2)         # op1 address
-    data(2, 0xED97, 0x6A00) # flds s12, [r7]    op1.real
-    data(2, 0xEDD7, 0x6A01) # flds s13, [r7, 4] op1.imag
+    vldr(s12, [r7, 0])      # op1.real
+    vldr(s13, [r7, 1])      # op1.imag
     add(r7, r0, r3)         # op2 address
-    data(2, 0xED97, 0x7A00) # flds s14, [r7]    op2.real
-    data(2, 0xEDD7, 0x7A01) # flds s15, [r7, 4] op2.imag
+    vldr(s14, [r7, 0])      # op2.real
+    vldr(s15, [r7, 1])      # op2.imag
 
-    data(2, 0xEE26, 0x5A07) # vmul s10, s12, s14 s10 = ax
-    data(2, 0xEE66, 0x4AA7) # vmul  s9, s13, s15 s9  = by
-    data(2, 0xEE35, 0x5A64) # vsub s10, s10, s9  s10 = ax - by
-    data(2, 0xEE66, 0x5A87) # vmul s11, s13, s14 s11 = ay
-    data(2, 0xEE66, 0x4A27) # vmul s9,  s12, s15 s9  = bx
-    data(2, 0xEE75, 0x5AA4) # vadd s11, s11, s9  s11 = ay + bx
+    vmul(s10, s12, s14)     # s10 = ax
+    vmul(s9, s13, s15)      # s9  = by
+    vsub(s10, s10, s9)      #  s10 = ax - by
+    vmul(s11, s13, s14)     # s11 = ay
+    vmul(s9,  s12, s15)     # s9  = bx
+    vadd(s11, s11, s9)      # s11 = ay + bx
 
     add(r1, r0, r1)         # Destination offset
-    data(2, 0xED81, 0x5A00) # fsts	s10, [r1,0]
-    data(2, 0xEDC1, 0x5A01) # fsts	s11, [r1,4]
+    vstr(s10, [r1, 0])
+    vstr(s11, [r1, 1])
     pop({r1, r7})
     bx(lr)                  # ! CMUL
 
@@ -215,10 +215,10 @@ def fft(r0, r1):        # r0 adress of scratchpad, r1 = Control: see above
 # r1 offset
     label(CONJUGATE)
     push({r2, r3})
-    add(r2, r0, r1)         # Operand address
-    data(2, 0xEDD2, 0x7A01) # flds s15, [r2, 4] op.imag
-    data(2, 0xEEF1, 0x7A67) # vneg r15, r15
-    data(2, 0xEDC2, 0x7A01) # fsts	s15, [r2,4]
+    add(r2, r0, r1)     # Operand address
+    vldr(s15, [r2, 1])  # op.imag
+    vneg(s15, s15)
+    vstr(s15, [r2, 1])
     pop({r2, r3})
     bx(lr)              # ! CONJUGATE
 
