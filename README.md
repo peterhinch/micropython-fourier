@@ -1,9 +1,9 @@
 Single precision FFT written in ARM assembler
 =============================================
 
-V0.5 31st October 2015
+V0.5 31st October 2015  
 Author: Peter Hinch  
-Requires: ARM platform with FPU (e.g. Pyboard). Firmware dated 31st October 2015 or later
+Requires: ARM platform with FPU (e.g. Pyboard). Firmware dated 31st October 2015 or later.  
 NOTE Earlier versions of firmware had an error which was corrected on the above date. This library has been altered to match this new version.
 
 Overview
