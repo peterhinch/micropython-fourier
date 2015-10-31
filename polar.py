@@ -1,5 +1,6 @@
 # polar.py Fast floating point cartesian to polar coordinate conversion
 # Author: Peter Hinch
+# 31st Oct 2015 Updated to match latest firmware
 # 21st April 2015
 # Now uses recently implemented FPU mnemonics
 # Arctan is based on the following approximation applicable to octant zero where q = x/y :
@@ -28,18 +29,18 @@ def polar(r0, r1, r2):    # Array length in r3: convert to integer
     vcvt_s32_f32(s15, s15)
     vmov(r3, s15)
 # Load constants
-    vldr(s0, [r2, 1])       # 0
-    vldr(s1, [r2, 2])       # 1
-    vldr(s2, [r2, 3])       # Pi
-    vldr(s3, [r2, 4])       # Pi/2
-    vldr(s4, [r2, 5])       # -Pi/2
-    vldr(s5, [r2, 6])       # Pi/4
-    vldr(s6, [r2, 7])       # 0.2447
-    vldr(s7, [r2, 8])       # 0.0663
+    vldr(s0, [r2, 4])       # 0
+    vldr(s1, [r2, 8])       # 1
+    vldr(s2, [r2, 12])       # Pi
+    vldr(s3, [r2, 16])       # Pi/2
+    vldr(s4, [r2, 20])       # -Pi/2
+    vldr(s5, [r2, 24])       # Pi/4
+    vldr(s6, [r2, 28])       # 0.2447
+    vldr(s7, [r2, 32])       # 0.0663
     b(START)
 
     label(DOCALC)
-    vldr(s8, [r2, 1])       # c = 0.0
+    vldr(s8, [r2, 4])       # c = 0.0
     vldr(s14, [r0, 0])      # x
     vldr(s15, [r1, 0])      # y
 # Calculate magnitude
