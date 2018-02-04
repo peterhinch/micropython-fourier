@@ -250,7 +250,7 @@ Assume you read the ADC over one second and do a 1024 point DFT. Samples will
 be acquired at a rate of 1.024KHz. However as described above the maximum
 frequency which can be acquired at that rate is 512Hz. The output data from the
 conversion occupies 1024 frequency "bins". bin[0] contains the DC component.
-bin[1] contains the 1Hz component up to bin[511].
+bin[1] contains the 1Hz component up to bin[511] with 511Hz.
 
 Bins from 1023 downwards contain complex conjugates of the lower bins, so
 bin[1023] contains 1Hz conjugate, bin[1022] 2Hz and so on. Frequencies are
@@ -260,7 +260,7 @@ phase (complex conjugates) which add to produce a real voltage.
 As such these higher bins contain no information and can be ignored: simply
 double the real part of the lower order bins to retrieve the voltage.
 
-# 8. A whimsical observation
+# 8. Whimsical observations
 
 At one time a 1024 point DFT was widely used as a computer benchmark. As such
 they were implemented in highly optimised assembler. I can't make this claim:
@@ -268,3 +268,7 @@ my code could be significantly improved. It does it in 12mS on a Pyboard. It
 costs £28.
 
 One of the first supercomputers, a Cray 1, took 9mS. It cost a king's ransom.
+
+My own introduction to DFT involved punching cards, handing them in to the
+computer operator, and retrieving a listing (often with only an error code)
+the following day...
