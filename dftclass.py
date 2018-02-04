@@ -39,22 +39,22 @@ class DFT(object):
         bits = round(math.log(length)/math.log(2))
         assert 2**bits == length, "Length must be an integer power of two"
         self.dboffset = 0              # Offset for dB calculation
-        self.length = length
+        self._length = length
         self.popfunc = popfunc          # Function to acquire data
-        self.re = array.array('f', (0 for x in range(self.length)))
-        self.im = array.array('f', (0 for x in range(self.length)))
+        self.re = array.array('f', (0 for x in range(self._length)))
+        self.im = array.array('f', (0 for x in range(self._length)))
         if winfunc:                     # If a window function is provided, create and populate the array
-            self.windata = array.array('f', (0 for x in range(self.length))) # of window coefficients
+            self.windata = array.array('f', (0 for x in range(self._length))) # of window coefficients
             for x in range(0, length):
                 self.windata[x] = winfunc(x, length)
         else:
             self.windata = None
         COMPLEX_NOS = 7                 # Size of complex buffer area before roots of unity
         ROOTSOFFSET = COMPLEX_NOS*2     # Word offset into complex array of roots of unity
-        bits = round(math.log(self.length)/math.log(2))
+        bits = round(math.log(self._length)/math.log(2))
         self.ctrl = array.array('i', [0]*6)
         self.cmplx = array.array('f', [0.0]*((bits +1 +COMPLEX_NOS)*2))
-        self.ctrl[0] = self.length
+        self.ctrl[0] = self._length
         self.ctrl[1] = bits
         self.ctrl[2] = addressof(self.re)
         self.ctrl[3] = addressof(self.im)
@@ -63,7 +63,7 @@ class DFT(object):
 
         self.cmplx[0] = 1.0             # Initial value of u = [1 +j0]
         self.cmplx[1] = 0.0             # Intermediate values are used by fft() and not initialised
-        self.cmplx[12] = 1.0/self.length # Default scaling multiply by 1/length
+        self.cmplx[12] = 1.0/self._length # Default scaling multiply by 1/length
         self.cmplx[13] = 0.0            # ignored
         i = ROOTSOFFSET
         creal = -1
@@ -81,6 +81,11 @@ class DFT(object):
     @property
     def scale(self):
         return self.cmplx[12]
+
+    @property
+    def length(self):
+        return self._length  # Read only
+
     @scale.setter
     def scale(self, value):             # Allow user to override default
         self.cmplx[12] = value
@@ -89,14 +94,14 @@ class DFT(object):
         if self.popfunc is not None:
             self.popfunc(self)          # Populate the data (for fwd transfers, just the real data)
         if conversion != REVERSE:       # Forward transform: real data assumed
-            setarray(self.im, 0, self.length)# Fast zero imaginary data
+            setarray(self.im, 0, self._length)# Fast zero imaginary data
             if self.windata:            # Fast apply the window function
-                winapply(self.re, self.windata, self.length)
+                winapply(self.re, self.windata, self._length)
         fft(self.ctrl, conversion)
         if (conversion & POLAR) == POLAR: # Ignore complex conjugates, convert 1st half of arrays
-            topolar(self.re, self.im, self.length//2) # Fast
+            topolar(self.re, self.im, self._length//2) # Fast
             if conversion == DB:        # Ignore conjugates: convert 1st half only
-                for idx, val in enumerate(self.re[0:self.length//2]):
+                for idx, val in enumerate(self.re[0:self._length//2]):
                     self.re[idx] = -80.0 if val <= 0.0 else 20*math.log10(val) - self.dboffset
 
 # Subclass for acquiring data from Pyboard ADC using read_timed() method.
@@ -104,7 +109,7 @@ class DFT(object):
 class DFTADC(DFT):
     def __init__(self, length, adcpin, winfunc=None, timer=6):
         super().__init__(length, winfunc = winfunc)
-        self.buff = array.array('i', (0 for x in range(self.length)))
+        self.buff = array.array('i', (0 for x in range(self._length)))
         if isinstance(adcpin, pyb.ADC):
             self.adc = adcpin
         else:
@@ -118,9 +123,9 @@ class DFTADC(DFT):
     def run(self, conversion, duration):
         tim = self.timer
         tim.deinit()
-        tim.init(freq = int(self.length/duration))
+        tim.init(freq = int(self._length/duration))
         #print('freq = ', tim.freq())
-        #print(self.length, duration, int(self.length/duration))
+        #print(self._length, duration, int(self._length/duration))
         self.adc.read_timed(self.buff, tim) # Note: blocks for duration
-        icopy(self.buff, self.re, self.length) # Fast copy integer array into real
+        icopy(self.buff, self.re, self._length) # Fast copy integer array into real
         super().run(conversion)

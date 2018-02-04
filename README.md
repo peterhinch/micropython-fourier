@@ -60,14 +60,14 @@ data this is straightforward. Data from sensors is usually in the form of
 integers which will need to be converted to floats. While this is trivial in
 Python, if speed is critical the `window.icopy` function can copy and convert
 an integer array to one of floats (see the `DFTADC` class). The test programs
-`dftadc.py` and `dfttest.py` provide examples, the latter showing the use of
-synthetic data.
+`dftadc.py`, `dftadc_tests.py` and `dfttest.py` provide examples, the latter
+showing the use of synthetic data.
 
 File | Purpose |
 -----|-------- |
-dftadc.py   | Demo program using the DAC to generate analog data passed to the ADC |
+dftadc.py   | Demo program using the DAC to generate analog data passed to the ADC. |
 dftadc_tests.py | Further ADC demos showing window function etc. |
-dfttest.py  | Demo with synthetic data |
+dfttest.py  | Demo with synthetic data. |
 dft.py      | The fft implementation. |
 dftclass.py | Python interface. Requires `polar.py`, `window.py`, `dft.py`. |
 window.py   | Assembler code to initialise an array and to multiply two 1D arrays. |
@@ -76,8 +76,9 @@ ctrlmap.ods | Describes structure of the control array. |
 algorithms.py | Pure Python DFT used as basis for asm code. |
 
 Test programs `dftadc.py` and `dfttest.py` provide means of demonstrating the
-code with ADC and synthetic data respectively. `dftadc.py` also illustrates the
-use of a window function.
+code with ADC and synthetic data respectively. `dftadc_tests.py` also
+illustrates the use of a window function. For ease of reading the test programs
+print phase angles in degrees.
 
 Test programs require `dft.py`, `dftclass.py`, `polar.py`, and `window.py`.
 Note that `dft.py` cannot be frozen as bytecode because of it use of assembler.
@@ -94,14 +95,15 @@ arguments:
 Method:  
  * `run` Mandatory arg: `conversion`. Specifies the conversion type. See below.
 
-Property:  
- * `scale` Integer. The consructor provides a default scaling factor `1/length`
- which may be modified prior to executing `run`.
+Properties:  
+ * `scale` Integer. Read/write. The consructor initialises this with the
+ default scaling factor `1/length`. This may be modified prior to executing
+ `run()`.
+ * `length` Integer. Read only. The transform length.
 
 User-accessible bound variables:  
  * `re` Real data array. Elements are of type `float`.
- * `im` Iaginary data array. Elements are of type `float`.
- * `length` Integer. The transform length.
+ * `im` Imaginary data array. Elements are of type `float`.
  * `dboffset` Float. Offset for dB conversion. See section 4.7.
 
 # 4.1 Conversion types
@@ -126,28 +128,37 @@ applied after it returns.
 
 # 4.3 The window function
 
+A discussion of the purpose of window functions is outside the scope of this
+document but [this article](https://en.wikipedia.org/wiki/Window_function)
+offers a detailed tutorial.
+
 This optional function takes two arguments:
  * `x` Point number (0 <= number < length).
  * `length` Transform length.
 
-It should return the window function value for the specified point. Normally
-in range 0-1.0.
+It should return the window function value for the specified point. Commonly
+this is in range 0-1.0. A typical window function is the Hanning (Hann) function:
+
+```python
+def hanning(x, length):  # Example of a window function
+    return 0.54 - 0.46*math.cos(2*math.pi*x/(length-1))
+```
 
 # 4.4 FORWARD transform
 
 Forward transforms assume real data: you only need to populate the real array.
 The imaginary array is zeroed by `DFT.run()` before a conversion is performed.
 By default values are scaled by the transform length to produce mathematically
-correct values. The scaling may be altered from the default of `1/length` by
-means of the `DFT` class `scale` property.
+correct values. The `forward()` function in `dfttest.py` provides an example of
+this.
 
-The result is complex data in the DFT object's `re` and `im` arrays.
+The result comprises complex data in the DFT object's `re` and `im` arrays.
 
 # 4.5 REVERSE transform
 
 These accept complex data in the DFT object's `re` and `im` arrays. If you use
-a `populate()` function it must initialise both arrays. The `revtest()`
-function in `dfttest.py` provides an example of this.
+a `populate()` function it must initialise both arrays. The `trev()` function
+in `dfttest.py` provides an example of this.
 
 The conversion result comprises complex data in the DFT object's `re` and `im`
 arrays.
@@ -157,7 +168,8 @@ arrays.
 This is a forward transform with results converted to polar coordinates.
 
 On completion the magnitude is in the DFT object's `re` array and the phase is
-in `im`. Phase is in radians in a form compatible with `math.atan2()`.
+in `im`. Phase is in radians with the same conventions as `math.atan2()`. The
+`test()` function in `dfttest.py` provides an example of this.
 
 For performance only the first half of `re` and `im` arrays are converted. The
 complex conjugates are ignored.
@@ -166,7 +178,8 @@ complex conjugates are ignored.
 
 This is a forward transform with results converted to polar coordinates. The
 magnitude is converted to dB. Magnitudes are scaled by adding the `dboffset`
-bound variable. Mgnitudes <= 0.0 are returned as -80dB. 
+bound variable. Mgnitudes <= 0.0 are returned as -80dB. The `dbtest()` function
+in `dfttest.py` provides an example of this.
 
 On completion the magnitude is in the DFT object's `re` array and the phase is
 in `im`. Phase is in radians in a form compatible with `math.atan2()`.
@@ -212,11 +225,14 @@ each will use 1KB of RAM. The `ctrl` and `cmplx` arrays are small (total size
 of the order of 120 bytes, size of the latter varies slightly with transform
 length) and contains data used by the transform itself, including a one-off
 calculation of the roots of unity (twiddle factors). There is no need to
-access this data. The constructor is pure Python as it is assumed that the
-speed of initialisation is not critical. The `run()` member function which
-performs the transform uses assembler for iterative routines in an attempt to
-optimise performance. The one exception is dB conversion of the result which
-is in Python.
+access this data, but for those wishing to understand the code the structure of
+the `ctrl` and `cmplx` arrays is documented in `ctrlmap.ods`.
+
+The constructor is pure Python as it is assumed that the speed of
+initialisation is not critical. The `run()` member function which performs the
+transform uses assembler for iterative routines in an attempt to optimise
+performance. The one exception is dB conversion of the result which is in
+Python.
 
 # 7. Note for beginners
 
@@ -230,11 +246,25 @@ a fundamental property of all sampled data systems and you need to ensure that
 such signals are removed. Typically this is performed by a combination of
 analog and digital filtering.
 
+Assume you read the ADC over one second and do a 1024 point DFT. Samples will
+be acquired at a rate of 1.024KHz. However as described above the maximum
+frequency which can be acquired at that rate is 512Hz. The output data from the
+conversion occupies 1024 frequency "bins". bin[0] contains the DC component.
+bin[1] contains the 1Hz component up to bin[511].
+
+Bins from 1023 downwards contain complex conjugates of the lower bins, so
+bin[1023] contains 1Hz conjugate, bin[1022] 2Hz and so on. Frequencies are
+represented as two contra-rotating phasors with the same magnitude but opposite
+phase (complex conjugates) which add to produce a real voltage.
+
+As such these higher bins contain no information and can be ignored: simply
+double the real part of the lower order bins to retrieve the voltage.
+
 # 8. A whimsical observation
 
 At one time a 1024 point DFT was widely used as a computer benchmark. As such
 they were implemented in highly optimised assembler. I can't make this claim:
-my code could be significantly imporoved. But it does it in 12mS on a Pyboard
-costing £28.
+my code could be significantly improved. It does it in 12mS on a Pyboard. It
+costs £28.
 
 One of the first supercomputers, a Cray 1, took 9mS. It cost a king's ransom.
