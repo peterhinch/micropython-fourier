@@ -35,7 +35,7 @@ DB      = const(7)      # bit 3: Polar with dB conversion
 # see ctrlmap.ods for more detail.
 
 class DFT(object):
-    def __init__(self, length, popfunc = None, winfunc = None):
+    def __init__(self, length, popfunc=None, winfunc=None):
         bits = round(math.log(length)/math.log(2))
         assert 2**bits == length, "Length must be an integer power of two"
         self.dboffset = 0              # Offset for dB calculation
@@ -44,7 +44,7 @@ class DFT(object):
         self.re = array.array('f', (0 for x in range(self.length)))
         self.im = array.array('f', (0 for x in range(self.length)))
         if winfunc:                     # If a window function is provided, create and populate the array
-            self.windata = array.array('f', (0 for x in range(self.length))) # # of window coefficients
+            self.windata = array.array('f', (0 for x in range(self.length))) # of window coefficients
             for x in range(0, length):
                 self.windata[x] = winfunc(x, length)
         else:
@@ -102,13 +102,25 @@ class DFT(object):
 # Subclass for acquiring data from Pyboard ADC using read_timed() method.
 
 class DFTADC(DFT):
-    def __init__(self, length, adcpin, winfunc = None):
+    def __init__(self, length, adcpin, winfunc=None, timer=6):
         super().__init__(length, winfunc = winfunc)
         self.buff = array.array('i', (0 for x in range(self.length)))
-        self.adc = pyb.ADC(adcpin)
+        if isinstance(adcpin, pyb.ADC):
+            self.adc = adcpin
+        else:
+            self.adc = pyb.ADC(adcpin)
+        if isinstance(timer, pyb.Timer):
+            self.timer = timer
+        else:
+            self.timer = pyb.Timer(timer)
         self.dboffset = PYBOARD_DBOFFSET # Value for Pyboard ADC
 
     def run(self, conversion, duration):
-        self.adc.read_timed(self.buff, int(self.length/duration)) # Note: blocks for duration
+        tim = self.timer
+        tim.deinit()
+        tim.init(freq = int(self.length/duration))
+        #print('freq = ', tim.freq())
+        #print(self.length, duration, int(self.length/duration))
+        self.adc.read_timed(self.buff, tim) # Note: blocks for duration
         icopy(self.buff, self.re, self.length) # Fast copy integer array into real
         super().run(conversion)
