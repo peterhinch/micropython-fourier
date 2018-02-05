@@ -1,12 +1,17 @@
 # dftclass.py Python interface for FFT assembler code
 # Author: Peter Hinch
-# Adapted for floating point
-# 11th April 2015
-# dB default scaling is relative to 1.0VRMS on Pyboard. Assume a 1VRMS sinewave.
-# 1.0VRMS = 1.414VP. ADC full scale = 4095 @ 3.25V. Hence ADC will output a peak value 0f 4095*1.414/3.25 = 1782.
-# Assuming we ignore the conjugate the value in the frequency bin in the 1st half of the array will hold 1782/2 = 891
 
-PYBOARD_DBOFFSET = const(59)    # dB offset = 20*math.log10(891)
+# 5th Feb 2018
+# PYBOARD_DBOFFSET calculation.
+# dB default scaling is relative to 1.0VRMS on Pyboard. Assume a 1VRMS sinewave.
+# Appropriate DC bias is assumed and does not affect calculation below.
+# 1.0VRMS = 1.414VP. ADC full scale = 4095 @ 3.25V. Hence ADC will output
+# a peak value 0f 4095*1.414/3.25 = 1782.
+# DB conversions ignore the conjugates. So the peak value in the frequency bins
+# in the 1st half of the array will be 1782/2 = 891. Hence
+# dB offset = round(20*math.log10(891)) = 59
+
+PYBOARD_DBOFFSET = const(59)
 import array
 import math
 import pyb
