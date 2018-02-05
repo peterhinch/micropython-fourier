@@ -124,8 +124,6 @@ class DFTADC(DFT):
         tim = self.timer
         tim.deinit()
         tim.init(freq = int(self._length/duration))
-        #print('freq = ', tim.freq())
-        #print(self._length, duration, int(self._length/duration))
         self.adc.read_timed(self.buff, tim) # Note: blocks for duration
         icopy(self.buff, self.re, self._length) # Fast copy integer array into real
         super().run(conversion)

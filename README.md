@@ -104,7 +104,7 @@ Properties:
 User-accessible bound variables:  
  * `re` Real data array. Elements are of type `float`.
  * `im` Imaginary data array. Elements are of type `float`.
- * `dboffset` Float. Offset for dB conversion. See section 4.7.
+ * `dboffset` Float. Offset for dB conversion. Default 0. See section 4.7.
 
 # 4.1 Conversion types
 

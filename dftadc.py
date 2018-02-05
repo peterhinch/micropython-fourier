@@ -9,17 +9,11 @@ import math
 import pyb
 from dftclass import DFTADC, DB
 
-def hanning(x, length):  # Example of a window function
-    return 0.54 - 0.46*math.cos(2*math.pi*x/(length-1))
-
-def cartesian_print(objDFT):
-    for x in range(objDFT.length):
-        print("{:6d}{:8.2f}{:8.2f}j".format(x, objDFT.re[x], objDFT.im[x]))
-
 def polarprint(objDFT):
     print("Polar: mag (dB) phase (degs)")
+    fstr = "{:6d}{:8.2f}   {:8.2f}"
     for x in range(objDFT.length//2):  # Only the first half is valid
-        print("{:6d}{:8.2f}   {:8.2f}".format(x, objDFT.re[x], int(math.degrees(objDFT.im[x]))))
+        print(fstr.format(x, objDFT.re[x], int(math.degrees(objDFT.im[x]))))
 
 # ************************** Output waveform generator *********************
 # Sinewave amplitude 3.25*127/255 = 1.68Vpk
