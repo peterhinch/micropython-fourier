@@ -4,7 +4,7 @@ Single precision FFT written in ARM assembler
 V0.51 4th Feb 2018  
 Author: Peter Hinch  
 Requires: ARM platform with FPU (e.g. Pyboard). Any firmware version dated
-after end of 2015.  
+2018 or later.  
 
 # 1. Overview
 
@@ -129,8 +129,9 @@ applied after it returns.
 # 4.3 The window function
 
 A discussion of the purpose of window functions is outside the scope of this
-document but [this article](https://en.wikipedia.org/wiki/Window_function)
-offers a detailed tutorial.
+document. See:  
+[Mathematical background](https://en.wikipedia.org/wiki/Window_function)  
+[Engineer's guide](http://www.bores.com/courses/advanced/windows/files/windows.pdf)
 
 This optional function takes two arguments:
  * `x` Point number (0 <= number < length).
@@ -140,8 +141,16 @@ It should return the window function value for the specified point. Commonly
 this is in range 0-1.0. A typical window function is the Hanning (Hann) function:
 
 ```python
-def hanning(x, length):  # Example of a window function
-    return 0.54 - 0.46*math.cos(2*math.pi*x/(length-1))
+def hanning(x, length):
+    return 0.5 - 0.5*math.cos(2*math.pi*x/(length-1))
+```
+
+This has a -6dB coherent gain which may be offset by multiplying by 2 to
+preserve signal amplitude:
+
+```python
+def hanning(x, length):
+    return 1 - math.cos(2*math.pi*x/(length-1))
 ```
 
 # 4.4 FORWARD transform
@@ -178,8 +187,8 @@ complex conjugates are ignored.
 
 This is a forward transform with results converted to polar coordinates. The
 magnitude is converted to dB. Magnitudes are scaled by adding the `dboffset`
-bound variable. Mgnitudes <= 0.0 are returned as -80dB. The `dbtest()` function
-in `dfttest.py` provides an example of this.
+bound variable. Magnitudes <= 0.0 are returned as -80dB. The `dbtest()`
+function in `dfttest.py` provides an example of this.
 
 On completion the magnitude is in the DFT object's `re` array and the phase is
 in `im`. Phase is in radians in a form compatible with `math.atan2()`.
