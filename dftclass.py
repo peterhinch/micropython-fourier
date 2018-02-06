@@ -43,12 +43,12 @@ class DFT(object):
     def __init__(self, length, popfunc=None, winfunc=None):
         bits = round(math.log(length)/math.log(2))
         assert 2**bits == length, "Length must be an integer power of two"
-        self.dboffset = 0              # Offset for dB calculation
+        self.dboffset = 0               # Offset for dB calculation
         self._length = length
         self.popfunc = popfunc          # Function to acquire data
         self.re = array.array('f', (0 for x in range(self._length)))
         self.im = array.array('f', (0 for x in range(self._length)))
-        if winfunc:                     # If a window function is provided, create and populate the array
+        if winfunc is not None:  # If a window function is provided, create and populate the array
             self.windata = array.array('f', (0 for x in range(self._length))) # of window coefficients
             for x in range(0, length):
                 self.windata[x] = winfunc(x, length)
@@ -77,9 +77,9 @@ class DFT(object):
         self.cmplx[i +1] = cimag
         i += 2
         for x in range(bits):
-            cimag = math.sqrt((1.0 - creal) / 2.0) # Imaginary part
+            cimag = math.sqrt((1.0 - creal) / 2.0)  # Imaginary part
             self.cmplx[i +1] = cimag
-            creal = math.sqrt((1.0 + creal) / 2.0) # Real part
+            creal = math.sqrt((1.0 + creal) / 2.0)  # Real part
             self.cmplx[i] = creal
             i += 2
 
@@ -87,20 +87,20 @@ class DFT(object):
     def scale(self):
         return self.cmplx[12]
 
-    @property
-    def length(self):
-        return self._length  # Read only
-
     @scale.setter
     def scale(self, value):             # Allow user to override default
         self.cmplx[12] = value
+
+    @property
+    def length(self):
+        return self._length  # Read only
 
     def run(self, conversion):          # Uses assembler for speed
         if self.popfunc is not None:
             self.popfunc(self)          # Populate the data (for fwd transfers, just the real data)
         if conversion != REVERSE:       # Forward transform: real data assumed
             setarray(self.im, 0, self._length)# Fast zero imaginary data
-            if self.windata:            # Fast apply the window function
+            if self.windata is not None:  # Fast apply the window function
                 winapply(self.re, self.windata, self._length)
         fft(self.ctrl, conversion)
         if (conversion & POLAR) == POLAR: # Ignore complex conjugates, convert 1st half of arrays
