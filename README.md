@@ -94,6 +94,7 @@ arguments:
 
 Method:  
  * `run` Mandatory arg: `conversion`. Specifies the conversion type. See below.
+ Returns the time in μs taken by the raw conversion.
 
 Properties:  
  * `scale` Integer. Read/write. The consructor initialises this with the

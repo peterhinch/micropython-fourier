@@ -15,6 +15,7 @@ test()  Forward polar transform. Output in bins 0, 4.
 dbtest()  dB conversion of above.
 dbhann()  Test of hanning (hann) window.
 trev()  Test reverse transform. Single cosine cycle.
+bench() Benchmark: time a 1K forward transform.
 '''
     print('\x1b[32m')
     print(st)
@@ -109,3 +110,12 @@ def trev():
     mydft = DFT(128, revtest)
     mydft.run(REVERSE)
     cartesian_print(mydft)
+
+# 1K point benchmark
+def bench():
+    printexp('''Bin 0 real 1.00 imag 0.00j
+Bin 4 real 0.00 imag -1.00j.''')
+    mydft = DFT(1024, acqu_test)
+    t = mydft.run(FORWARD)
+    cartesian_print(mydft)
+    print('Time for 1K DFT = {}μs'.format(t))

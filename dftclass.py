@@ -19,6 +19,7 @@ from dft import fft
 from uctypes import addressof
 from window import winapply, setarray, icopy
 from polar import topolar
+import utime
 
 # Control: on entry r1 should hold one of these values to determine the direction and scaling
 # of the transform. Only bit 0 now used by fft()
@@ -102,13 +103,15 @@ class DFT(object):
             setarray(self.im, 0, self._length)# Fast zero imaginary data
             if self.windata is not None:  # Fast apply the window function
                 winapply(self.re, self.windata, self._length)
+        start = utime.ticks_us()
         fft(self.ctrl, conversion)
+        delta = utime.ticks_diff(utime.ticks_us(), start)
         if (conversion & POLAR) == POLAR: # Ignore complex conjugates, convert 1st half of arrays
             topolar(self.re, self.im, self._length//2) # Fast
             if conversion == DB:        # Ignore conjugates: convert 1st half only
                 for idx, val in enumerate(self.re[0:self._length//2]):
                     self.re[idx] = -80.0 if val <= 0.0 else 20*math.log10(val) - self.dboffset
-
+        return delta
 # Subclass for acquiring data from Pyboard ADC using read_timed() method.
 
 class DFTADC(DFT):
