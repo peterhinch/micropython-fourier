@@ -74,6 +74,7 @@ window.py   | Assembler code to initialise an array and to multiply two 1D array
 polar.py    | Cartesian to polar conversion. Includes fast atan2 approximation. |
 ctrlmap.ods | Describes structure of the control array. |
 algorithms.py | Pure Python DFT used as basis for asm code. |
+dftbench.py | Benchmark times a 1024-point forward transform. |
 
 Test programs `dftadc.py` and `dfttest.py` provide means of demonstrating the
 code with ADC and synthetic data respectively. `dftadc_tests.py` also
@@ -216,6 +217,8 @@ suitable DC bias). This only affects `DB` conversions.
 
 Method.  
  * `run` Mandatory args: `conversion`, `duration`.
+ Returns the time in μs taken by the conversion from the time of completion of
+ data acquisition to the completion of conversion.
 
 `conversion` must be one of the forward conversion types defined in section
 4.1.  
@@ -274,7 +277,7 @@ double the real part of the lower order bins to retrieve the voltage.
 
 At one time a 1024 point DFT was widely used as a computer benchmark. As such
 they were implemented in highly optimised assembler. I can't make this claim:
-my code could be significantly improved. It does it in 12mS on a Pyboard. It
+my code could be significantly improved. It does it in 12.9mS on a Pyboard. It
 costs £28.
 
 One of the first supercomputers, a Cray 1, took 9mS. It cost a king's ransom.
@@ -282,3 +285,6 @@ One of the first supercomputers, a Cray 1, took 9mS. It cost a king's ransom.
 My own introduction to DFT involved punching cards, handing them in to the
 computer operator, and retrieving a listing (often with only an error code)
 the following day...
+
+Note that this time of 12ms is on a Pyboard 1.x and is measured by the DFTADC
+class from the completion of data acquisition to completion of the transform.

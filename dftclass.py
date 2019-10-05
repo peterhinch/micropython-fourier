@@ -133,5 +133,7 @@ class DFTADC(DFT):
         tim.deinit()
         tim.init(freq = int(self._length/duration))
         self.adc.read_timed(self.buff, tim) # Note: blocks for duration
+        start = utime.ticks_us()
         icopy(self.buff, self.re, self._length) # Fast copy integer array into real
         super().run(conversion)
+        return utime.ticks_diff(utime.ticks_us(), start)

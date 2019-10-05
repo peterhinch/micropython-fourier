@@ -2,6 +2,7 @@
 # 14th March 2015
 # Examples of Discrete Fourier Transform code in Python
 # http://forum.micropython.org/viewtopic.php?f=2&t=208&hilit=fft
+# Released under the MIT license.
 #
 import math, cmath
 
