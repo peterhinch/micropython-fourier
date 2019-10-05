@@ -16,5 +16,5 @@ results of the transform.
 mydft = DFTADC(1024, 'X7')  # Use default timer 6
 
 dt = mydft.run(FORWARD, 0.1)
-print('Time for 1024 point forward transform: {}ms'.format(dt))
+print('Time for 1024 point forward transform: {}μs.'.format(dt))
 
