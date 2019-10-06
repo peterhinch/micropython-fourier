@@ -1,10 +1,30 @@
 Single precision FFT written in ARM assembler
 =============================================
 
-V0.51 4th Feb 2018  
+V0.52 6th Oct 2019  
 Author: Peter Hinch  
-Requires: ARM platform with FPU (e.g. Pyboard). Any firmware version dated
-2018 or later.  
+Requires: ARM platform with FPU (e.g. Pyboard 1.x, Pyboard D). Any firmware
+version dated 2018 or later.  
+
+# Contents
+
+ 1. [Overview](./README.md#1-overview)  
+ 2. [Design](./README.md#2-design)  
+  2.1 [Future development](./README.md#21-future-development)  
+ 3. [Getting Started](./README.md#3-getting-started)  
+ 4. [The DFT class](./README.md#4-the-dft-class)  
+  4.1 [Conversion types](./README.md#41-conversion-types)  
+  4.2 [The populate function](./README.md#42-the-populate-function)  
+  4.3 [The window function](./README.md#43-the-window-function)  
+  4.4 [FORWARD transform](./README.md#44-forward-transform)  
+  4.5 [REVERSE transform](./README.md#45-reverse-transform)  
+  4.6 [POLAR transform](./README.md#46-polar-transform)  
+  4.7 [DB transform](./README.md#47-db-transform)  
+ 5. [The DFTADC class](./README.md#5-the-dftadc-class)  
+ 6. [Implementation](./README.md#6-implementation)  
+ 7. [Note for beginners](./README.md#7-note-for-beginners)  
+ 8. [Performance](./README.md#8-performance)  
+ 9. [Whimsical observations](./README.md#9-whimsical-observations)  
 
 # 1. Overview
 
@@ -12,9 +32,8 @@ The `DFT` class is intended to perform a fast discrete fourier transform on an
 array of data typically received from a sensor. Apart from initialisation most
 of the code is written in ARM assembler for speed. It uses the floating point
 coprocessor and does not allocate heap storage: it can therefore be called from
-a MicroPython interrupt handler. It performs a 256 sample conversion in 2.5mS.
-This compares with 115mS for a floating point conversion in pure Python and
-90mS using the native code emitter. A 1024 point conversion takes 12mS.
+a MicroPython interrupt handler. See [section 8](./README.md#8-performance) for
+benchmark results on the various Pyboard options.
 
 The DFT is performed using the Cooley-Tukey algorithm. This requires arrays of
 length 2**N where N is an integer. The "twiddle factors" are precomputed in
@@ -25,12 +44,19 @@ Inverse transforms and fast Cartesian to polar conversion are supported, as is
 the use of window functions. There is an option to convert polar magnitudes to
 dB.
 
-# 2. Limitations
+The principal purpose of this library is for processing signals acquired from a
+Pyboard ADC. Features are targeted at typical engineering applications. It can
+be used with arbitrary data in other applications, but such users may also want
+to consider [ulab](https://github.com/v923z/micropython-ulab.git) which is a
+"micro" version of NumPy implemented as a C module.
 
-This code effectively replaces my integer based converter: the ARM FPU is so
-fast that integer code offers no speed advantage. The use of floating point
-avoids problems with scaling and loss of precision which become apparent when
-integers are used for transforms with more than 256 bins.
+# 2. Design
+
+This code obsoletes my integer based converter which was written before the
+inline assembler supported floating point instructions: the ARM FPU is so fast
+that integer code offers no speed advantage. The use of floating point avoids
+problems with scaling and loss of precision which become apparent when integers
+are used for transforms with more than 256 bins.
 
 `adc.read_timed()` may be used for data acquisition. It blocks until completion
 but is designed to work up to about a 750KHz sample rate.
@@ -38,6 +64,22 @@ but is designed to work up to about a 750KHz sample rate.
 Conversion from Cartesian to polar is performed in assembler using an
 approximation to the `math.atan2()` function. Its accuracy is of the order of
 +-0.085 degrees.
+
+Calculations use single precision floating point on all platforms.
+
+## 2.1 Future development
+
+Modern compilers mean that the traditional performance benefit of assembler is
+nonexistent unless the assembler code is hand crafted and optimised to an
+extreme level. This is because the compiler exploits details of the internal
+design of the CPU in ways which are difficult for the programmer to achieve.
+
+The benefit of the inline assembler (compared to C modules) is that the code
+may be run on a standard firmware build. When dynamically loaded C modules
+arrive this will no longer apply. The drawback of assembler is that it is not
+portable.
+
+I may rewrite this library as a dynamically loadable C module.
 
 # 3. Getting Started
 
@@ -84,6 +126,8 @@ print phase angles in degrees.
 Test programs require `dft.py`, `dftclass.py`, `polar.py`, and `window.py`.
 Note that `dft.py` cannot be frozen as bytecode because of it use of assembler.
 
+###### [Top](./README.md#contents)
+
 # 4. The DFT class
 
 This is the interface to the conversion. The constructor takes the following
@@ -108,7 +152,7 @@ User-accessible bound variables:
  * `im` Imaginary data array. Elements are of type `float`.
  * `dboffset` Float. Offset for dB conversion. Default 0. See section 4.7.
 
-# 4.1 Conversion types
+## 4.1 Conversion types
 
 These constants in `dftclass.py` are passed to `DFT.run()` and define the
 conversion to be performed. The following are the options, described in detail
@@ -121,14 +165,14 @@ REVERSE | Perform a reverse transform. See 4.5 below. |
 POLAR | Forward transform with results as polar coordinates. See 4.6. |
 DB | As per POLAR but magnitude is converted to dB. See 4.7. |
 
-# 4.2 The populate function
+## 4.2 The populate function
 
 This optional function is called each time `run` is executed. Its purpose is to
 populate the `re` data array, possibly by accessing hardware. It receives the
 `DFT` instance as its arg. Any return value is ignored. Any windowing is
 applied after it returns.
 
-# 4.3 The window function
+## 4.3 The window function
 
 A discussion of the purpose of window functions is outside the scope of this
 document. See:  
@@ -155,7 +199,7 @@ def hanning(x, length):
     return 1 - math.cos(2*math.pi*x/(length-1))
 ```
 
-# 4.4 FORWARD transform
+## 4.4 FORWARD transform
 
 Forward transforms assume real data: you only need to populate the real array.
 The imaginary array is zeroed by `DFT.run()` before a conversion is performed.
@@ -165,7 +209,7 @@ this.
 
 The result comprises complex data in the DFT object's `re` and `im` arrays.
 
-# 4.5 REVERSE transform
+## 4.5 REVERSE transform
 
 These accept complex data in the DFT object's `re` and `im` arrays. If you use
 a `populate()` function it must initialise both arrays. The `trev()` function
@@ -174,7 +218,7 @@ in `dfttest.py` provides an example of this.
 The conversion result comprises complex data in the DFT object's `re` and `im`
 arrays.
 
-# 4.6 POLAR transform
+## 4.6 POLAR transform
 
 This is a forward transform with results converted to polar coordinates.
 
@@ -185,7 +229,7 @@ in `im`. Phase is in radians with the same conventions as `math.atan2()`. The
 For performance only the first half of `re` and `im` arrays are converted. The
 complex conjugates are ignored.
 
-# 4.7 DB transform
+## 4.7 DB transform
 
 This is a forward transform with results converted to polar coordinates. The
 magnitude is converted to dB. Magnitudes are scaled by adding the `dboffset`
@@ -198,7 +242,9 @@ in `im`. Phase is in radians in a form compatible with `math.atan2()`.
 For performance only the first half of `re` and `im` arrays are converted. The
 complex conjugates are ignored.
 
-# 5 Class DFTADC
+###### [Top](./README.md#contents)
+
+# 5 The DFTADC class
 
 This supports input from a Pyboard ADC using `pyb.Timer.read_timed`. Its base
 class is `DFT`.
@@ -220,8 +266,8 @@ Method.
  Returns the time in μs taken by the conversion from the time of completion of
  data acquisition to the completion of conversion.
 
-`conversion` must be one of the forward conversion types defined in section
-4.1.  
+`conversion` must be one of the forward conversion types defined in 
+[section 4.1](./README.md#41-conversion-types).  
 `duration` Integer or float. Acquisition duration in seconds.
 
 `run` will block for the duration.
@@ -246,6 +292,8 @@ initialisation is not critical. The `run()` member function which performs the
 transform uses assembler for iterative routines in an attempt to optimise
 performance. The one exception is dB conversion of the result which is in
 Python.
+
+###### [Top](./README.md#contents)
 
 # 7. Note for beginners
 
@@ -273,7 +321,22 @@ phase (complex conjugates) which add to produce a real voltage.
 As such these higher bins contain no information and can be ignored: simply
 double the real part of the lower order bins to retrieve the voltage.
 
-# 8. Whimsical observations
+# 8. Performance
+
+The script `dftbench.py` times a 1024 point forward transform in a way that
+mimics a typical application. In such an application the `DFTADC` would be
+instantiated at the start. Data would be acquired repeatedly from an ADC at an
+application dependent rate. Critical timing is from the end of data acquisition
+to the availability of transform data. This is the interval that `dftbench`
+measures. Results were:
+
+Board | Time (ms) |
+|-----|-----------|
+| Pyboard 1.x | 12.9 |
+| Pyboard D SF2W |  3.6 |
+| Pyboard D SF6W |  3.6 |
+
+# 9. Whimsical observations
 
 At one time a 1024 point DFT was widely used as a computer benchmark. As such
 they were implemented in highly optimised assembler. I can't make this claim:
@@ -286,5 +349,4 @@ My own introduction to DFT involved punching cards, handing them in to the
 computer operator, and retrieving a listing (often with only an error code)
 the following day...
 
-Note that this time of 12ms is on a Pyboard 1.x and is measured by the DFTADC
-class from the completion of data acquisition to completion of the transform.
+###### [Top](./README.md#contents)
