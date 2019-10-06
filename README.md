@@ -232,15 +232,21 @@ complex conjugates are ignored.
 ## 4.7 DB transform
 
 This is a forward transform with results converted to polar coordinates. The
-magnitude is converted to dB. Magnitudes are scaled by adding the `dboffset`
-bound variable. Magnitudes <= 0.0 are returned as -80dB. The `dbtest()`
-function in `dfttest.py` provides an example of this.
+magnitude is converted to dB. The 0dB level defaults to 1VRMS. Magnitudes are
+scaled by subtracting the `dboffset` bound variable. Magnitudes <= 0.0 are
+returned as -80dB. The `dbtest()` function in `dfttest.py` provides an example
+of this.
 
 On completion the magnitude is in the DFT object's `re` array and the phase is
 in `im`. Phase is in radians in a form compatible with `math.atan2()`.
 
 For performance only the first half of `re` and `im` arrays are converted. The
 complex conjugates are ignored.
+
+As noted above the 0dB reference voltage is determined by the bound variable
+`DFTADC.dboffset`. An explanation of the calculation of its value may be found
+in comments in `dftclass.py`. The value may be changed prior to performing a DB
+transform to change the reference voltage.
 
 ###### [Top](./README.md#contents)
 
