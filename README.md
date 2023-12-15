@@ -325,7 +325,7 @@ represented as two contra-rotating phasors with the same magnitude but opposite
 phase (complex conjugates) which add to produce a real voltage.
 
 As such these higher bins contain no information and can be ignored: simply
-double the real part of the lower order bins to retrieve the voltage.
+double the absolute value of the lower order bins to retrieve the voltage.
 
 # 8. Performance
 
