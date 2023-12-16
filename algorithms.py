@@ -12,8 +12,8 @@ def fft_recursive(x):
     n = len(x)
     if n <= 1:
         return x
-    even = fft(x[0::2])
-    odd =  fft(x[1::2])
+    even = fft_recursive(x[0::2])
+    odd =  fft_recursive(x[1::2])
     return [even[m] + math.e**(-2j*math.pi*m/n)*odd[m] for m in range(n//2)] + \
            [even[m] - math.e**(-2j*math.pi*m/n)*odd[m] for m in range(n//2)]
 
