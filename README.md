@@ -3,12 +3,13 @@ Single precision FFT written in ARM assembler
 
 V0.52 6th Oct 2019  
 Author: Peter Hinch  
-Requires: ARM platform with FPU (e.g. Pyboard 1.x, Pyboard D). Any firmware
-version dated 2018 or later.  
+Requires: ARM platform with FPU supporting Arm Thumb V7 assembler. (e.g.
+Pyboard 1.x, Pyboard D, Pico 2). Any firmware version dated 2018 or later.  
 
 # Contents
 
  1. [Overview](./README.md#1-overview)  
+  1.1 [The Pico 2](./README.md#11-the-pico-2)  
  2. [Design](./README.md#2-design)  
   2.1 [Future development](./README.md#21-future-development)  
  3. [Getting Started](./README.md#3-getting-started)  
@@ -49,6 +50,18 @@ Pyboard ADC. Features are targeted at typical engineering applications. It can
 be used with arbitrary data in other applications, but such users may also want
 to consider [ulab](https://github.com/v923z/micropython-ulab.git) which is a
 "micro" version of NumPy implemented as a C module.
+
+## 1.1 The Pico 2
+
+The following files are currently Pyboard-specific because they use the `pyb`
+module:
+ * dftclass.py
+ * dftadc.py
+ * dftadc_tests.py
+The first can be changed to replace `pyb` with `machine`: this enables synthetic
+data tests and demos to run. For real applications using the ADC, adaptation for
+low data rates should be easy. It may be possible to achieve fast sampling using
+the PIO.
 
 # 2. Design
 
@@ -124,7 +137,7 @@ illustrates the use of a window function. For ease of reading the test programs
 print phase angles in degrees.
 
 Test programs require `dft.py`, `dftclass.py`, `polar.py`, and `window.py`.
-Note that `dft.py` cannot be frozen as bytecode because of it use of assembler.
+Note that `dft.py` cannot be frozen as bytecode because of its use of assembler.
 
 ###### [Top](./README.md#contents)
 
@@ -272,7 +285,7 @@ Method.
  Returns the time in μs taken by the conversion from the time of completion of
  data acquisition to the completion of conversion.
 
-`conversion` must be one of the forward conversion types defined in 
+`conversion` must be one of the forward conversion types defined in
 [section 4.1](./README.md#41-conversion-types).  
 `duration` Integer or float. Acquisition duration in seconds.
 
@@ -341,6 +354,7 @@ Board | Time (ms) |
 | Pyboard 1.x | 12.9 |
 | Pyboard D SF2W |  3.6 |
 | Pyboard D SF6W |  3.6 |
+| Pico 2 |  6.97 |
 
 # 9. Whimsical observations
 
