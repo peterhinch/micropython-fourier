@@ -58,6 +58,7 @@ module:
  * dftclass.py
  * dftadc.py
  * dftadc_tests.py
+
 The first can be changed to replace `pyb` with `machine`: this enables synthetic
 data tests and demos to run. For real applications using the ADC, adaptation for
 low data rates should be easy. It may be possible to achieve fast sampling using
