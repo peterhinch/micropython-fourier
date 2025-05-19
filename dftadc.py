@@ -6,7 +6,10 @@
 
 import array
 import math
-import pyb
+try:
+    import pyb
+except ImportError:
+    import machine as pyb
 from dftclass import DFTADC, DB
 
 def polarprint(objDFT):
