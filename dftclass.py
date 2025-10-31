@@ -14,7 +14,10 @@
 PYBOARD_DBOFFSET = const(59)
 import array
 import math
-import pyb
+try:
+    import pyb
+except ImportError:
+    import machine as pyb
 from dft import fft
 from uctypes import addressof
 from window import winapply, setarray, icopy
