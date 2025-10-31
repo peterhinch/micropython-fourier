@@ -1,0 +1,9 @@
+{
+  "urls": [
+    ["dft.py", "github:peterhinch/micropython-fourier/dft.py"],
+    ["dftclass.py", "github:peterhinch/micropython-fourier/dftclass.py"],
+    ["window.py", "github:peterhinch/micropython-fourier/window.py"],
+    ["polar.py", "github:peterhinch/micropython-fourier/polar.py"]
+  ],
+  "version": "1.0.0"
+}
